@@ -9,9 +9,7 @@ type Route struct {
     HandlerFunc http.HandlerFunc
 }
 
-type Routes []Route
-
-var routes = Routes{
+var routes = []Route{
     Route{
         "Index",
         "GET",
@@ -29,5 +27,17 @@ var routes = Routes{
         "GET",
         "/todos/{todoId}",
         TodoShow,
+    },
+    Route{
+        "TodoCreate",
+        "POST",
+        "/todos",
+        TodoCreate,
+    },  
+    Route{
+        "TokenGet",
+        "GET",
+        "/token",
+        TokenGet,
     },
 }

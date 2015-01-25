@@ -8,7 +8,7 @@ import (
 
 )
 
-var todos Todos
+var todos []Todo
 
 var (
     cluster *gocql.ClusterConfig
@@ -25,14 +25,10 @@ var (
     getQuery = "SELECT id, name, completed, due FROM todos WHERE id = ?;"
 )
 
-// Give us some seed data
 func init() {
     cluster = gocql.NewCluster("10.254.254.100")
     cluster.Keyspace = "todo"
     cluster.Consistency = gocql.Quorum
-    RepoCreateTodo(Todo{Name: "todo 1"})
-    RepoCreateTodo(Todo{Name: "todo 2"})
-    RepoGetAll()
 }
 
 func RepoGetAll() {
@@ -43,9 +39,9 @@ func RepoGetAll() {
     var tid, name string 
     var completed bool
     var due time.Time
+    todos = make([]Todo, 0)
     iter := c.Query(getAllQuery).Iter()
     for iter.Scan(&tid, &name, &completed, &due) {
-        fmt.Println(&tid)
         todos = append(todos, Todo{
                  Id: tid,
                 Name: name,
@@ -78,17 +74,17 @@ func RepoFindTodo(id int) (Todo, error) {
     }, nil
 }
 
-func RepoCreateTodo(t Todo) (string, error) {
+func RepoCreateTodo(t Todo) (Todo, error) {
     c, e := GetDataAccessSession()
     if e != nil {
-        return "", e
+        return Todo{}, e
     }
     id := t.Id
     if len(id) == 0 {
         uuid, e := gocql.RandomUUID()
         if e != nil {
             fmt.Println("ID Error")
-            return "", e
+            return Todo{}, e
         }
         id = uuid.String()
     }
@@ -99,9 +95,12 @@ func RepoCreateTodo(t Todo) (string, error) {
 
     e = c.Query(insertQuery, id, t.Name, t.Completed, due).Exec()
     if e != nil {
-        return "", e
+        return Todo{}, e
     }
-    return id, nil
+
+    t.Id = id
+    t.Due = due
+    return t, nil
 }
 
 // func RepoDestroyTodo(id int) error {
