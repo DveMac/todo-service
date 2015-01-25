@@ -10,9 +10,7 @@ func main() {
 
     router := NewRouter()
 
-    secureMiddleware := secure.New(secure.Options{
-        
-    })
+    secureMiddleware := secure.New(secure.Options{})
 
     n := negroni.Classic()
     n.Use(negroni.HandlerFunc(secureMiddleware.HandlerFuncWithNext))
@@ -21,4 +19,3 @@ func main() {
     n.Run(":3000")
 
 }
-

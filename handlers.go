@@ -4,6 +4,7 @@ import (
     "encoding/json"
     "fmt"
     "time"
+    // "log"
     "net/http"
 
     "github.com/gorilla/mux"
@@ -15,6 +16,12 @@ var (
     privateKey []byte
     publicKey []byte
 )
+
+type Token struct {
+    Expiry     time.Time `json:"expiry"`
+    Value      string    `json:"value"`
+}
+
  
 func init() {
     /*
@@ -80,14 +87,21 @@ func TokenGet(w http.ResponseWriter, r *http.Request) {
     // Sign and get the complete encoded token as a string
     tokenString, err := CreateTokenString(userId)
   
+    to := Token{
+        Value: tokenString,
+        Expiry: time.Now(),
+    }
+
     if err != nil {
         panic(err)
     }
 
+    w.Header().Set("Content-Type", "application/json; charset=UTF-8")
     w.WriteHeader(http.StatusOK)
-    // w.Header().Set("Content-Type", "application/json; charset=UTF-8")
     
-    if err := json.NewEncoder(w).Encode(tokenString); err != nil {
+    // fmt.Fprintln(w, tokenString)
+
+    if err := json.NewEncoder(w).Encode(to); err != nil {
         panic(err)
     }
 }
