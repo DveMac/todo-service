@@ -1,21 +1,21 @@
 package main
 
 import (
-    "github.com/codegangsta/negroni"
-    "github.com/phyber/negroni-gzip/gzip"
-    "github.com/unrolled/secure"
+	"github.com/codegangsta/negroni"
+	"github.com/phyber/negroni-gzip/gzip"
+	"github.com/unrolled/secure"
 )
 
 func main() {
 
-    router := NewRouter()
+	router := NewRouter()
 
-    secureMiddleware := secure.New(secure.Options{})
+	secureMiddleware := secure.New(secure.Options{})
 
-    n := negroni.Classic()
-    n.Use(negroni.HandlerFunc(secureMiddleware.HandlerFuncWithNext))
-    n.Use(gzip.Gzip(gzip.DefaultCompression))
-    n.UseHandler(router)
-    n.Run(":3000")
+	n := negroni.Classic()
+	n.Use(negroni.HandlerFunc(secureMiddleware.HandlerFuncWithNext))
+	n.Use(gzip.Gzip(gzip.DefaultCompression))
+	n.UseHandler(router)
+	n.Run(":3000")
 
 }
