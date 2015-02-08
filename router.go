@@ -1,18 +1,16 @@
 package main
 
-import "github.com/gorilla/mux"
+import "github.com/julienschmidt/httprouter"
 
-func NewRouter() *mux.Router {
-	router := mux.NewRouter().StrictSlash(true)
-	for _, route := range routes {
-		handler := route.HandlerFunc
+func NewRouter() *httprouter.Router {
+	router := httprouter.New()
 
-		router.
-			Methods(route.Method).
-			Path(route.Pattern).
-			Name(route.Name).
-			Handler(handler)
+	router.GET("/todos", TodoIndex)
+	router.POST("/todos", TodoCreate)
+	router.GET("/todos/:todoId", TodoShow)
+	router.DELETE("/todos/:todoId", TodoDelete)
 
-	}
+	router.GET("/token", TokenGet)
+
 	return router
 }

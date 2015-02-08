@@ -6,8 +6,10 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 	"io/ioutil"
+
+	"github.com/dvemac/todo-service/types"
 )
 
 var (
@@ -15,18 +17,10 @@ var (
 	publicKey  []byte
 )
 
-type Token struct {
-	Expiry time.Time `json:"expiry"`
-	Value  string    `json:"value"`
-}
-
-type ClientError struct {
-	Message string `json:message`
-}
-
 type objectDelegate func(*json.Encoder) error
 
 func init() {
+
 	/*
 	   openssl genrsa -out demo.rsa 2056 # the 1024 is the size of the key we are generating
 	   openssl rsa -in demo.rsa -pubout > demo.rsa.pub
@@ -56,7 +50,7 @@ func sendText(w http.ResponseWriter, status int, text string) {
 	send(w, status)
 }
 
-func TodoIndex(w http.ResponseWriter, r *http.Request) {
+func TodoIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	RepoGetAll()
 
 	sendJson(w, http.StatusOK, func(x *json.Encoder) error {
@@ -64,8 +58,8 @@ func TodoIndex(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func TodoShow(w http.ResponseWriter, r *http.Request) {
-	todoId := mux.Vars(r)["todoId"]
+func TodoShow(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	todoId := ps.ByName("todoId")
 
 	if todo, err := RepoFindTodo(todoId); err != nil {
 		sendText(w, http.StatusNotFound, "")
@@ -74,8 +68,8 @@ func TodoShow(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func TodoDelete(w http.ResponseWriter, r *http.Request) {
-	todoId := mux.Vars(r)["todoId"]
+func TodoDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	todoId := ps.ByName("todoId")
 
 	if err := RepoDestroyTodo(todoId); err != nil {
 		sendText(w, http.StatusNotFound, "")
@@ -84,15 +78,15 @@ func TodoDelete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func TodoCreate(w http.ResponseWriter, r *http.Request) {
-	var t Todo
+func TodoCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var t types.Todo
 
 	decoder := json.NewDecoder(r.Body)
 
 	if err := decoder.Decode(&t); err != nil {
 		sendJson(w, http.StatusBadRequest, func(x *json.Encoder) error {
-			return x.Encode(ClientError{
-				Message: err,
+			return x.Encode(types.ClientError{
+				Message: err.Error(),
 			})
 		})
 	}
@@ -104,17 +98,16 @@ func TodoCreate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func TokenGet(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	username := vars["username"]
-	password := vars["password"]
+func TokenGet(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	username := ps.ByName("username")
+	password := ps.ByName("password")
 
 	userId, _ := TestCredentials(username, password)
 
 	// Sign and get the complete encoded token as a string
 	tokenString, err := CreateTokenString(userId)
 
-	to := Token{
+	to := types.Token{
 		Value:  tokenString,
 		Expiry: time.Now(),
 	}
